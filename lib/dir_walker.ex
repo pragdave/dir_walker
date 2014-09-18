@@ -73,7 +73,7 @@ defmodule DirWalker do
     case do
     File.dir?(path) ->
       first_n([files_in(path) | rest], n, result)
-    File.regular?(path)
+    File.regular?(path) ->
       first_n(rest, n-1, [ path | result ])
     true ->
       first_n(rest, n-1, [ result ])

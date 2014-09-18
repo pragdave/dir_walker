@@ -70,10 +70,13 @@ defmodule DirWalker do
   defp first_n([], _n, result),       do: {result, []}
 
   defp first_n([ path | rest ], n, result) do
-    if File.dir?(path) do
+    case do
+    File.dir?(path) ->
       first_n([files_in(path) | rest], n, result)
-    else
+    File.regular?(path)
       first_n(rest, n-1, [ path | result ])
+    true ->
+      first_n(rest, n-1, [ result ])
     end
   end
 

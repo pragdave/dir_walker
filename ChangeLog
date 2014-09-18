@@ -1,0 +1,6 @@
+2014-09-18  Dave Thomas  <dave@FasterAir.local>
+
+	* lib/dir_walker.ex: Ignore special files.
+
+	* mix.exs: bump to 0.0.2
+

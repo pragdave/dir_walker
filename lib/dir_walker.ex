@@ -1,12 +1,14 @@
 defmodule DirWalker do
 
+  require Logger
+
   use GenServer
 
   def start_link(list_of_paths) when is_list(list_of_paths) do
     GenServer.start_link(__MODULE__, list_of_paths)
   end
 
-  def start_link(path), do: start_link([path])
+  def start_link(path) when is_binary(path), do: start_link([path])
 
 
   @doc """
@@ -70,6 +72,8 @@ defmodule DirWalker do
   defp first_n([], _n, result),       do: {result, []}
 
   defp first_n([ path | rest ], n, result) do
+    Logger.info(inspect(path))
+     unless path, do: raise "nil"
     cond do
     File.dir?(path) ->
       first_n([files_in(path) | rest], n, result)
@@ -83,7 +87,15 @@ defmodule DirWalker do
   defp files_in(path) do
     path
     |> :file.list_dir
-    |> case(do: ({:ok, list} -> list))
+    |> ignore_error(path)
     |> Enum.map(fn(rel) -> Path.join(path, rel) end)
   end
+
+  def ignore_error({:error, type}, path) do
+    Logger.info("Ignore folder #{path} (#{type})")
+    []
+  end
+
+  def ignore_error({:ok, list}, _path), do: list
+
 end

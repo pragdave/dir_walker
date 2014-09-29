@@ -18,6 +18,19 @@ defmodule DirWalkerTest do
     end
 
     assert DirWalker.next(walker) == nil
-  end                 
+  end     
 
+  test "stop method works" do 
+   {:ok, walker} = DirWalker.start_link("test/dir")
+   assert DirWalker.stop(walker) == :ok 
+   refute Process.alive?(walker)
+  end             
+
+  test "stream method works" do
+      dirw = DirWalker.stream("test/dir") 
+      file =  Enum.take(dirw,1)
+      assert length(file) == 1
+      path = [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ]
+      assert Enum.find(path,fn(x) -> x == file end )
+  end 
 end

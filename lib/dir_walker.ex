@@ -35,6 +35,32 @@ defmodule DirWalker do
     GenServer.call(iterator, { :get_next, n })
   end
 
+  @doc """
+   Stops the DirWalker
+  """
+  def stop(server) do
+    GenServer.call(server, :stop)
+  end
+
+  @doc """
+  Implement a stream interface that will return a lazy enumerable. 
+
+  ## Example
+
+    iex> first_file = DirWalker.stream( "/") |> Enum.take(1)
+  """
+
+  def stream(path_list) do
+    Stream.resource(fn -> DirWalker.start_link(path_list) end,
+                    fn(dirw) -> 
+                      case DirWalker.next(dirw,1) do
+                        data when is_list(data) -> {data, dirw }
+                        _ -> {:halt, dirw}
+                      end
+                    end,
+                    fn(dirw) -> DirWalker.stop(dirw) end 
+      )
+  end 
 
   ##################
   # Implementation #
@@ -47,6 +73,11 @@ defmodule DirWalker do
   def handle_call({:get_next, n}, _from, path_list) do
     {result, new_path_list} = first_n(path_list, n, _result=[])
     { :reply, result, new_path_list }
+  end
+
+  def handle_call(:stop, from, state) do
+      GenServer.reply(from, :ok )
+      {:stop, :normal, state}
   end
 
 
@@ -97,5 +128,6 @@ defmodule DirWalker do
   end
 
   def ignore_error({:ok, list}, _path), do: list
+
 
 end

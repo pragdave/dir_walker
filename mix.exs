@@ -29,7 +29,7 @@ defmodule DirWalker.Mixfile do
   end
 
   def application do
-    [applications: []]
+    [applications: [:logger]]
   end
 
   defp package do

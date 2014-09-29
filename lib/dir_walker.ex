@@ -51,14 +51,17 @@ defmodule DirWalker do
   """
 
   def stream(path_list) do
-    Stream.resource(fn -> DirWalker.start_link(path_list) end,
+    Stream.resource( fn -> 
+                      {:ok, dirw} = DirWalker.start_link(path_list) 
+                      dirw
+                    end ,
                     fn(dirw) -> 
                       case DirWalker.next(dirw,1) do
                         data when is_list(data) -> {data, dirw }
                         _ -> {:halt, dirw}
                       end
                     end,
-                    fn(dirw) -> DirWalker.stop(dirw) end 
+                    fn(dirw) -> :ok end 
       )
   end 
 

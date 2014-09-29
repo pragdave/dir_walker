@@ -30,7 +30,15 @@ defmodule DirWalkerTest do
       dirw = DirWalker.stream("test/dir") 
       file =  Enum.take(dirw,1)
       assert length(file) == 1
-      path = [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ]
-      assert Enum.find(path,fn(x) -> x == file end )
+      assert file = [ "test/dir/a.txt"] 
   end 
+
+  test "stream method completes" do 
+     paths = [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ]
+     dirw = DirWalker.stream("test/dir")
+     files = Enum.into(dirw,[])
+     assert Enum.sort(files) == Enum.sort(paths)
+
+  end 
+
 end

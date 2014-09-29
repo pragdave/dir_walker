@@ -38,7 +38,6 @@ defmodule DirWalkerTest do
      dirw = DirWalker.stream("test/dir")
      files = Enum.into(dirw,[])
      assert Enum.sort(files) == Enum.sort(paths)
-
   end 
 
 end

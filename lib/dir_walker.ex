@@ -106,7 +106,7 @@ defmodule DirWalker do
   defp first_n([], _n, result),       do: {result, []}
 
   defp first_n([ path | rest ], n, result) do
-    Logger.info(inspect(path))
+    Logger.debug(inspect(path))
      unless path, do: raise "nil"
     cond do
     File.dir?(path) ->

@@ -61,7 +61,7 @@ defmodule DirWalker do
                         _ -> {:halt, dirw}
                       end
                     end,
-                    fn(dirw) -> :ok end 
+                    fn(dirw) -> DirWalker.stop(dirw) end 
       )
   end 
 

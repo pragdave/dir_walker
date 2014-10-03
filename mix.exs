@@ -15,6 +15,10 @@ defmodule DirWalker.Mixfile do
 
   Successive calls to `next` will return successive file names, until
   all file names have been returned. 
+
+  These methods have also been wrapped into a Stream resource. 
+
+    paths = DirWalker.stream(path) # or [path,path...]
   """
 
   def project do
@@ -29,7 +33,7 @@ defmodule DirWalker.Mixfile do
   end
 
   def application do
-    [applications: []]
+    [applications: [:logger]]
   end
 
   defp package do

@@ -11,20 +11,21 @@ defmodule DirWalker.Mixfile do
 
   Then return the next `n` path names using
 
-      paths = DirWalker.next(walker [, n \\ 1])
+      paths = DirWalker.next(walker <, n \\ 1>)
 
   Successive calls to `next` will return successive file names, until
   all file names have been returned. 
 
   These methods have also been wrapped into a Stream resource. 
 
-    paths = DirWalker.stream(path) # or [path,path...]
+       paths = DirWalker.stream(path) # or [path,path...]
+
   """
 
   def project do
     [
       app:         :dir_walker,
-      version:     "0.0.3",
+      version:     "0.0.4",
       elixir:      ">= 1.0.0",
       deps:        [],
       description: @moduledoc,

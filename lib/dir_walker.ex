@@ -1,14 +1,21 @@
 defmodule DirWalker do
 
+  @moduledoc Path.join([__DIR__, "../README.md"]) |> File.read!
+
   require Logger
 
   use GenServer
 
-  def start_link(list_of_paths) when is_list(list_of_paths) do
-    GenServer.start_link(__MODULE__, list_of_paths)
+  def start_link(path, opts \\ %{})
+                       
+  def start_link(list_of_paths, opts) when is_list(list_of_paths) do
+    mappers = setup_mappers(opts)
+    GenServer.start_link(__MODULE__, {list_of_paths, mappers})
   end
 
-  def start_link(path) when is_binary(path), do: start_link([path])
+  def start_link(path, opts) when is_binary(path) do
+    start_link([path], opts)
+  end
 
 
   @doc """
@@ -47,7 +54,8 @@ defmodule DirWalker do
 
   ## Example
 
-    iex> first_file = DirWalker.stream( "/") |> Enum.take(1)
+    iex> first_file = DirWalker.stream("/") |> Enum.take(1)
+
   """
 
   def stream(path_list) do
@@ -69,13 +77,13 @@ defmodule DirWalker do
   # Implementation #
   ##################
 
-  def handle_call({:get_next, _n}, _from, []) do
-    { :reply, nil, []}
+  def handle_call({:get_next, _n}, _from, state = {[], _}) do
+    { :reply, nil, state}
   end
 
-  def handle_call({:get_next, n}, _from, path_list) do
-    {result, new_path_list} = first_n(path_list, n, _result=[])
-    { :reply, result, new_path_list }
+  def handle_call({:get_next, n}, _from, {path_list, mappers}) do
+    {result, new_path_list} = first_n(path_list, n, mappers, _result=[])
+    { :reply, result, {new_path_list, mappers} }
   end
 
   def handle_call(:stop, from, state) do
@@ -88,33 +96,35 @@ defmodule DirWalker do
   # nested directory listing. We keep it as a list rather
   # than flatten it in order to keep performance up.
 
-  defp first_n([ [] | rest ], n, result)  do
-    first_n(rest, n, result)
+  defp first_n([ [] | rest ], n, mappers, result)  do
+    first_n(rest, n, mappers, result)
   end
       
-  defp first_n([ [first] | rest ], n, result)  do
-    first_n([ first | rest ], n, result)
+  defp first_n([ [first] | rest ], n, mappers, result)  do
+    first_n([ first | rest ], n, mappers, result)
   end
       
-  defp first_n([ [first | nested] | rest ], n, result)  do
-    first_n([ first | [ nested | rest ] ], n, result)
+  defp first_n([ [first | nested] | rest ], n, mappers, result)  do
+    first_n([ first | [ nested | rest ] ], n, mappers, result)
   end
 
   # Otherwise just a path as the first entry
 
-  defp first_n(path_list, 0, result), do: {result, path_list}
-  defp first_n([], _n, result),       do: {result, []}
+  defp first_n(path_list, 0, _mappers, result), do: {result, path_list}
+  defp first_n([], _n, _mappers, result),       do: {result, []}
 
-  defp first_n([ path | rest ], n, result) do
-    Logger.debug(inspect(path))
-     unless path, do: raise "nil"
-    cond do
-    File.dir?(path) ->
-      first_n([files_in(path) | rest], n, result)
-    File.regular?(path) ->
-      first_n(rest, n-1, [ path | result ])
+  defp first_n([ path | rest ], n, mappers, result) do
+    stat = File.stat!(path)
+    case stat.type do
+    :directory ->
+      first_n([files_in(path) | rest], 
+              n, 
+              mappers, 
+              mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
+    :regular ->
+      first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
     true ->
-      first_n(rest, n-1, [ result ])
+      first_n(rest, n-1, mappers, [ result ])
     end
   end
 
@@ -133,4 +143,19 @@ defmodule DirWalker do
   def ignore_error({:ok, list}, _path), do: list
 
 
+  defp setup_mappers(opts) do
+    %{
+      include_stat:
+        one_of(opts[:include_stat],
+               fn (path, _stat) -> path end,    
+               fn (path, stat)  -> {path, stat} end),
+      include_dir_names:
+        one_of(opts[:include_dir_names],
+               fn (_path, result) -> result end,    
+               fn (path, result)  -> [ path | result ] end)
+    }
+  end
+
+  defp one_of(bool, _if_false, if_true) when bool, do: if_true
+  defp one_of(_bool, if_false, _if_true),          do: if_false
 end

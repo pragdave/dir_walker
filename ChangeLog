@@ -1,3 +1,13 @@
+2014-10-04  Dave Thomas  <dave@FasterAir.local>
+
+	* Add options to
+	  * include File.Stat with each file name
+	  * include directory names in the list returned
+
+2014-10-03 Booker Bense
+
+	* Add a Stream API
+
 2014-09-18  Dave Thomas  <dave@FasterAir.local>
 
 	* lib/dir_walker.ex: Ignore special files.

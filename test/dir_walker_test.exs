@@ -31,7 +31,7 @@ defmodule DirWalkerTest do
     {:ok, walker} = DirWalker.start_link("test/dir/c/d", include_dir_names: true)
     files = DirWalker.next(walker, 99)
     assert length(files) == 3
-    assert  ["test/dir/c/d/f.txt", "test/dir/c/d/e", "test/dir/c/d"] = files
+    assert  ["test/dir/c/d/f.txt", "test/dir/c/d/e", "test/dir/c/d"] == files
   end
 
   test "returns directory names and stats if asked to" do

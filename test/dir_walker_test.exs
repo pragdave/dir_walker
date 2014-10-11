@@ -1,17 +1,20 @@
 defmodule DirWalkerTest do
   use ExUnit.Case
 
+
   test "basic traversal works" do
+    test_files = ["test/dir/a.txt", "test/dir/b.txt", "test/dir/badlink", "test/dir/c/d/f.txt", "test/dir/goodlink"]
     {:ok, walker} = DirWalker.start_link("test/dir")
     files = DirWalker.next(walker, 99)
-    assert length(files) == 3
-    assert files == [ "test/dir/c/d/f.txt", "test/dir/b.txt", "test/dir/a.txt" ]
+    assert length(files) == 5
+    assert Enum.sort(files) == Enum.sort(test_files)
   end                 
 
 
   test "traversal in chunks works" do
+    test_files = ["test/dir/a.txt", "test/dir/b.txt", "test/dir/badlink", "test/dir/c/d/f.txt", "test/dir/goodlink"]
     {:ok, walker} = DirWalker.start_link("test/dir")
-    for path <- [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ] do
+    for path <- test_files do
       files = DirWalker.next(walker)
       assert length(files) == 1
       assert files == [ path ]
@@ -55,17 +58,17 @@ defmodule DirWalkerTest do
   end             
 
   test "stream method works" do
-      dirw = DirWalker.stream("test/dir") 
-      file =  Enum.take(dirw,1)
-      assert length(file) == 1
-      assert file == [ "test/dir/a.txt"] 
+    dirw = DirWalker.stream("test/dir") 
+    file =  Enum.take(dirw,1)
+    assert length(file) == 1
+    assert file == [ "test/dir/a.txt"] 
   end 
 
   test "stream method completes" do 
-     paths = [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ]
-     dirw = DirWalker.stream("test/dir")
-     files = Enum.into(dirw,[])
-     assert Enum.sort(files) == Enum.sort(paths)
+    test_files = ["test/dir/a.txt", "test/dir/b.txt", "test/dir/badlink", "test/dir/c/d/f.txt", "test/dir/goodlink"]
+    dirw = DirWalker.stream("test/dir")
+    files = Enum.into(dirw,[])
+    assert Enum.sort(files) == Enum.sort(test_files)
   end 
 
 end

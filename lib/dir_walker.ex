@@ -114,7 +114,16 @@ defmodule DirWalker do
   defp first_n([], _n, _mappers, result),       do: {result, []}
 
   defp first_n([ path | rest ], n, mappers, result) do
-    stat = File.stat!(path)
+    # Should figure out a way to pass this in. 
+    time_opts = [time: :posix]
+
+    # File.stat! blows up on dangling symlink, until File.lstat! is in elixir
+    # add this workaround. 
+    
+    {:ok , fileinfo } = :file.read_link_info(path, time_opts)
+    stat = File.Stat.from_record(fileinfo)
+     
+
     case stat.type do
     :directory ->
       first_n([files_in(path) | rest], 
@@ -122,6 +131,8 @@ defmodule DirWalker do
               mappers, 
               mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
     :regular ->
+      first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+    :symlink ->
       first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
     true ->
       first_n(rest, n-1, mappers, [ result ])

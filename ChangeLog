@@ -1,3 +1,9 @@
+2014-10-12 Booker Bense <bbense@gmail.com>
+    * Added support for detecting symlinks
+    * Tweaks to tests to work around git not storing
+      empty directories.
+
+
 2014-10-04  Dave Thomas  <dave@FasterAir.local>
 
 	* Add options to

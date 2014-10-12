@@ -27,7 +27,7 @@ defmodule DirWalker.Mixfile do
       app:         :dir_walker,
       version:     "0.0.4",
       elixir:      ">= 1.0.0",
-      deps:        [],
+      deps:        deps,
       description: @moduledoc,
       package:     package
     ]
@@ -47,4 +47,10 @@ defmodule DirWalker.Mixfile do
                     }
     ]
   end
+
+  def deps do 
+   [{:earmark, "~> 0.1", only: :dev},
+     {:ex_doc, "~> 0.5", only: :dev}]
+  end 
+
 end

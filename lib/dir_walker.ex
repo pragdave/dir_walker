@@ -119,10 +119,13 @@ defmodule DirWalker do
 
     # File.stat! blows up on dangling symlink, until File.lstat! is in elixir
     # add this workaround. 
-    
-    {:ok , fileinfo } = :file.read_link_info(path, time_opts)
-    stat = File.Stat.from_record(fileinfo)
-     
+    lstat = :file.read_link_info(path, time_opts)
+    case lstat do 
+    {:ok , fileinfo } ->
+      stat = File.Stat.from_record(fileinfo)
+    {:error, reason} ->
+        raise File.Error, reason: reason, action: "read file stats", path: path
+    end 
 
     case stat.type do
     :directory ->

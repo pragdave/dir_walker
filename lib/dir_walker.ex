@@ -136,7 +136,7 @@ defmodule DirWalker do
     :regular ->
       first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
     :symlink ->
-      first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+      handle_symlink(path,time_opts,rest, n, mappers, result)
     true ->
       first_n(rest, n-1, mappers, [ result ])
     end
@@ -156,6 +156,56 @@ defmodule DirWalker do
 
   def ignore_error({:ok, list}, _path), do: list
 
+  # Notes on symlinks. 
+  #A symlink can be either
+  #
+  # A file
+  #
+  # A directory
+  #
+  # A dangling link
+  #
+  # Without any options, DirWalker returns a list of all the "files" in the paths. 
+  # For symlinks using File.stat! works on options 1,2 and blows up on 3. 
+  # file:read_link_info doesn't blow up on any of these, but requires the user to deal 
+  # with symlinks in some fashion.
+
+  # I think the "right" thing to do is emulate the current behaviour, if the user 
+  # does not specify any options. If they specify :include_stat, then the code should 
+  # simply return a list and it's up to the user to deal.
+
+  # It also might make sense to add an :ignore_symlinks, option.#   
+
+  defp handle_symlink(path,time_opts,rest,n,mappers,result) do
+    rstat = File.stat(path,time_opts)
+    case rstat do
+    {:ok , rstat } ->
+        handle_existing_symlink(path,rstat,rest,n,mappers,result)
+    {:error, :enoent } ->
+       Logger.info("Dangling symlink found: #{path} ")
+       first_n(rest, n-1, mappers, [ mappers.include_stat.(path, rstat) | result ])
+    {:error, reason} ->
+       Logger.info("Stat failed on #{path} with #{reason}")
+       { result, [] }
+    end 
+  end 
+
+  # This emulates existing behaviour, but does not return just the symlink
+  # when include_stat is set. 
+  defp handle_existing_symlink(path,stat,rest,n,mappers,result) do
+    case stat.type do
+      :directory ->
+        first_n([files_in(path) | rest], 
+              n, 
+              mappers, 
+              mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
+      :regular ->
+        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+      true -> 
+        first_n(rest, n-1, mappers, [ result ])
+    end 
+
+  end 
 
   defp setup_mappers(opts) do
     %{

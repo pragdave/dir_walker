@@ -51,6 +51,21 @@ defmodule DirWalkerTest do
     assert s3.type == :directory
   end
 
+  test "returns symlink as file type with include_stat option" do
+    {:ok, walker} = DirWalker.start_link("test/dirlink", 
+                                         include_stat:      true)
+    [{"test/dirlink", stat }] = DirWalker.next(walker)
+    assert stat.type == :symlink
+  end 
+
+  test "follows symlinks without include_stat option" do
+     test_files = ["test/dirlink/a.txt", "test/dirlink/b.txt", "test/dirlink/badlink", "test/dirlink/c/d/f.txt", "test/dirlink/goodlink"]
+    {:ok, walker} = DirWalker.start_link("test/dirlink")
+    files = DirWalker.next(walker, 99)
+    assert length(files) == 5
+    assert Enum.sort(files) == Enum.sort(test_files)
+  end 
+
   test "stop method works" do 
    {:ok, walker} = DirWalker.start_link("test/dir")
    assert DirWalker.stop(walker) == :ok 

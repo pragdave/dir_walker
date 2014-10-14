@@ -136,7 +136,11 @@ defmodule DirWalker do
     :regular ->
       first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
     :symlink ->
-      handle_symlink(path,time_opts,rest, n, mappers, result)
+      if(include_stat?(mappers)) do
+        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+      else 
+        handle_symlink(path,time_opts,rest, n, mappers, result)
+      end 
     true ->
       first_n(rest, n-1, mappers, [ result ])
     end
@@ -205,6 +209,10 @@ defmodule DirWalker do
         first_n(rest, n-1, mappers, [ result ])
     end 
 
+  end 
+
+  defp include_stat?(mappers) do 
+    mappers.include_stat.(:a, :b) == {:a, :b}
   end 
 
   defp setup_mappers(opts) do

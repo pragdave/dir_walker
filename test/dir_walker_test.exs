@@ -10,17 +10,20 @@ defmodule DirWalkerTest do
     assert Enum.sort(files) == Enum.sort(test_files)
   end                 
 
-
+  # Travis CI returns files in different order.
   test "traversal in chunks works" do
     test_files = ["test/dir/a.txt", "test/dir/b.txt", "test/dir/badlink", "test/dir/c/d/f.txt", "test/dir/goodlink"]
     {:ok, walker} = DirWalker.start_link("test/dir")
-    for path <- test_files do
+    
+    found_files = for _path <- test_files do
       files = DirWalker.next(walker)
       assert length(files) == 1
-      assert files == [ path ]
-    end
-
+      filename = Enum.at(files,0)
+      assert Enum.member?(test_files,filename)
+      filename
+    end |> Enum.into([])
     assert DirWalker.next(walker) == nil
+    assert Enum.sort(found_files) == Enum.sort(test_files)
   end     
 
   test "returns stat if asked to" do
@@ -59,7 +62,7 @@ defmodule DirWalkerTest do
   end 
 
   test "follows symlinks without include_stat option" do
-     test_files = ["test/dirlink/a.txt", "test/dirlink/b.txt", "test/dirlink/badlink", "test/dirlink/c/d/f.txt", "test/dirlink/goodlink"]
+    test_files = ["test/dirlink/a.txt", "test/dirlink/b.txt", "test/dirlink/badlink", "test/dirlink/c/d/f.txt", "test/dirlink/goodlink"]
     {:ok, walker} = DirWalker.start_link("test/dirlink")
     files = DirWalker.next(walker, 99)
     assert length(files) == 5
@@ -72,11 +75,14 @@ defmodule DirWalkerTest do
    refute Process.alive?(walker)
   end             
 
+  # Travis CI returns files in different order.
   test "stream method works" do
+    test_files = ["test/dir/a.txt", "test/dir/b.txt", "test/dir/badlink","test/dir/c/d/f.txt", "test/dir/goodlink"]
     dirw = DirWalker.stream("test/dir") 
-    file =  Enum.take(dirw,1)
+    file = Enum.take(dirw,1)
     assert length(file) == 1
-    assert file == [ "test/dir/a.txt"] 
+    filename = Enum.at(file,0)
+    assert Enum.member?(test_files,filename) 
   end 
 
   test "stream method completes" do 

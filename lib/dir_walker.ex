@@ -7,7 +7,7 @@ defmodule DirWalker do
   use GenServer
 
   def start_link(path, opts \\ %{})
-                       
+ 
   def start_link(list_of_paths, opts) when is_list(list_of_paths) do
     mappers = setup_mappers(opts)
     GenServer.start_link(__MODULE__, {list_of_paths, mappers})
@@ -16,7 +16,6 @@ defmodule DirWalker do
   def start_link(path, opts) when is_binary(path) do
     start_link([path], opts)
   end
-
 
   @doc """
   Return the next _n_ files from the lists of files, recursing into
@@ -121,10 +120,16 @@ defmodule DirWalker do
               n, 
               mappers, 
               mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
+
     :regular ->
-      first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+        if mappers.matching.(path) do
+        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+      else
+        first_n(rest, n, mappers, result)
+      end
+
     true ->
-      first_n(rest, n-1, mappers, [ result ])
+      first_n(rest, n, mappers, result)
     end
   end
 
@@ -149,10 +154,15 @@ defmodule DirWalker do
         one_of(opts[:include_stat],
                fn (path, _stat) -> path end,    
                fn (path, stat)  -> {path, stat} end),
+
       include_dir_names:
         one_of(opts[:include_dir_names],
                fn (_path, result) -> result end,    
-               fn (path, result)  -> [ path | result ] end)
+               fn (path, result)  -> [ path | result ] end),
+      matching:
+        one_of(!!opts[:matching],
+             fn _path -> true end,
+             fn path  -> String.match?(path, opts[:matching]) end),
     }
   end
 

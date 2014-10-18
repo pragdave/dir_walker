@@ -1,3 +1,7 @@
+2014-10-18  Dave Thomas  <dave@FasterAir.local>
+
+	* Add `matching:` option to filter names of returned files.
+
 2014-10-04  Dave Thomas  <dave@FasterAir.local>
 
 	* Add options to

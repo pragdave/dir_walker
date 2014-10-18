@@ -20,6 +20,17 @@ defmodule DirWalkerTest do
     assert DirWalker.next(walker) == nil
   end     
 
+  test "returns only matching names if requested" do
+    {:ok, walker} = DirWalker.start_link("test/dir", matching: ~r(a|f))
+    for path <- [ "test/dir/a.txt", "test/dir/c/d/f.txt" ] do
+      files = DirWalker.next(walker)
+      assert length(files) == 1
+      assert files == [ path ]
+    end
+
+    assert DirWalker.next(walker) == nil
+  end
+  
   test "returns stat if asked to" do
     {:ok, walker} = DirWalker.start_link("test/dir/c", include_stat: true)
     files = DirWalker.next(walker, 99)

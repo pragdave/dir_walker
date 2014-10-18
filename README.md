@@ -32,4 +32,8 @@ These methods have also been wrapped into a Stream resource.
   Include the names of directories that are traversed (normally just the names
   of regular files are returned). Note that the order is such that directory names
   will typically be returned after the names of files in those directories.
-  
+
+* `matches: ` _regex_
+
+  Only file names matching the regex will be returned. Does not affect
+  directory traversals.

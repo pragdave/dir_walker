@@ -54,13 +54,14 @@ defmodule DirWalkerTest do
 
   test "returns both matching names and stats if asked to " do
     test_types = [ :regular , :symlink ]
+    test_files = [ "test/dir/a.txt","test/dir/badlink", "test/dir/c/d/f.txt" ]
     {:ok, walker} = DirWalker.start_link("test/dir", 
                                          matching: ~r(a|f), 
                                          include_stat: true)
-    for path <- [ "test/dir/a.txt","test/dir/badlink", "test/dir/c/d/f.txt" ] do
-      [{files, fstat}] = DirWalker.next(walker)
-      assert Enum.member?(test_types,fstat.type) 
-      assert files == path 
+    for _path <- test_files do
+      [{filename, fstat}] = DirWalker.next(walker)
+      assert Enum.member?(test_types,fstat.type)  
+      assert Enum.member?(test_files,filename)
     end
     assert DirWalker.next(walker) == nil
   end

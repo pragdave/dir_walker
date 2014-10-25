@@ -27,13 +27,14 @@ defmodule DirWalkerTest do
   end     
 
   test "returns only matching names if requested" do
+    test_files = [ "test/dir/a.txt","test/dir/badlink", "test/dir/c/d/f.txt" ]
     {:ok, walker} = DirWalker.start_link("test/dir", matching: ~r(a|f))
-    for path <- [ "test/dir/a.txt","test/dir/badlink", "test/dir/c/d/f.txt" ] do
+    for _path <- test_files do
       files = DirWalker.next(walker)
       assert length(files) == 1
-      assert files == [ path ]
+      filename = Enum.at(files,0)
+      assert Enum.member?(test_files,filename)
     end
-
     assert DirWalker.next(walker) == nil
   end
 
@@ -82,17 +83,22 @@ defmodule DirWalkerTest do
   end
 
   test "returns directory names and stats if asked to" do
+    test_files = ["test/dir/c/d/f.txt", "test/dir/c/d/e", "test/dir/c/d"]
     {:ok, walker} = DirWalker.start_link("test/dir/c/d", 
                                          include_stat:      true,
                                          include_dir_names: true)
     files = DirWalker.next(walker, 99)
     assert length(files) == 3
-    assert  [{"test/dir/c/d/f.txt", s1 = %File.Stat{}}, 
-             {"test/dir/c/d/e",     s2 = %File.Stat{}},
-             {"test/dir/c/d",       s3 = %File.Stat{}}] = files
-    assert s1.type == :regular
-    assert s2.type == :directory
-    assert s3.type == :directory
+    assert  [{file1, s1 = %File.Stat{}}, 
+             {file2, s2 = %File.Stat{}},
+             {file3, s3 = %File.Stat{}}] = files
+    found_files = [file1,file2,file3]
+    found_stats = [s1,s2,s3]
+    assert Enum.sort(found_files) == Enum.sort(test_files)
+    should_be_dir = Enum.at(found_stats,Enum.find_index(found_files, fn(x) -> x == "test/dir/c/d/e" end))
+    should_be_file = Enum.at(found_stats,Enum.find_index(found_files, fn(x) -> x == "test/dir/c/d/f.txt" end))
+    assert should_be_file.type == :regular
+    assert should_be_dir.type == :directory
   end
 
   test "returns symlink as file type with include_stat option" do

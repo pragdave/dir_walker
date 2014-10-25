@@ -38,14 +38,18 @@ defmodule DirWalkerTest do
   end
 
   test "matching names works with different matching order " do
+    test_files = [ "test/dir/b.txt","test/dir/badlink" ]
     {:ok, walker} = DirWalker.start_link("test/dir", matching: ~r(b))
-    for path <- [ "test/dir/b.txt","test/dir/badlink" ] do
-      files = DirWalker.next(walker)
-      assert length(files) == 1
-      assert files == [ path ]
-    end
+    found_files = for _path <- test_files do
+                      files = DirWalker.next(walker)
+                      assert length(files) == 1
+                      filename = Enum.at(files,0)
+                      assert Enum.member?(test_files,filename)
+                      filename
+                   end |> Enum.into([])
 
     assert DirWalker.next(walker) == nil
+    assert Enum.sort(found_files) == Enum.sort(test_files)
   end
 
   test "returns both matching names and stats if asked to " do

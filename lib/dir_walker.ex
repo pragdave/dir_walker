@@ -82,6 +82,10 @@ defmodule DirWalker do
 
   def handle_call({:get_next, n}, _from, {path_list, mappers}) do
     {result, new_path_list} = first_n(path_list, n, mappers, _result=[])
+    Logger.debug("Replying with #{inspect(result)}  #{inspect(new_path_list)}")
+    if( {result, new_path_list} == { [] , [] }) do
+      result = nil
+    end
     { :reply, result, {new_path_list, mappers} }
   end
 
@@ -111,7 +115,7 @@ defmodule DirWalker do
 
   defp first_n(path_list, 0, _mappers, result), do: {result, path_list}
   defp first_n([], _n, _mappers, result),       do: {result, []}
-
+  
   defp first_n([ path | rest ], n, mappers, result) do
     # Should figure out a way to pass this in. 
     time_opts = [time: :posix]

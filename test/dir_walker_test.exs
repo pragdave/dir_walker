@@ -37,6 +37,17 @@ defmodule DirWalkerTest do
     assert DirWalker.next(walker) == nil
   end
 
+  test "matching names works with different matching order " do
+    {:ok, walker} = DirWalker.start_link("test/dir", matching: ~r(b))
+    for path <- [ "test/dir/b.txt","test/dir/badlink" ] do
+      files = DirWalker.next(walker)
+      assert length(files) == 1
+      assert files == [ path ]
+    end
+
+    assert DirWalker.next(walker) == nil
+  end
+
   test "returns both matching names and stats if asked to " do
     test_types = [ :regular , :symlink ]
     {:ok, walker} = DirWalker.start_link("test/dir", 

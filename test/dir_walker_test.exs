@@ -16,12 +16,12 @@ defmodule DirWalkerTest do
     {:ok, walker} = DirWalker.start_link("test/dir")
     
     found_files = for _path <- test_files do
-      files = DirWalker.next(walker)
-      assert length(files) == 1
-      filename = Enum.at(files,0)
-      assert Enum.member?(test_files,filename)
-      filename
-    end |> Enum.into([])
+                    files = DirWalker.next(walker)
+                    assert length(files) == 1
+                    filename = Enum.at(files,0)
+                    assert Enum.member?(test_files,filename)
+                    filename
+                  end |> Enum.into([])
     assert DirWalker.next(walker) == nil
     assert Enum.sort(found_files) == Enum.sort(test_files)
   end     
@@ -34,6 +34,19 @@ defmodule DirWalkerTest do
       assert files == [ path ]
     end
 
+    assert DirWalker.next(walker) == nil
+  end
+
+  test "returns both matching names and stats if asked to " do
+    test_types = [ :regular , :symlink ]
+    {:ok, walker} = DirWalker.start_link("test/dir", 
+                                         matching: ~r(a|f), 
+                                         include_stat: true)
+    for path <- [ "test/dir/a.txt","test/dir/badlink", "test/dir/c/d/f.txt" ] do
+      [{files, fstat}] = DirWalker.next(walker)
+      assert Enum.member?(test_types,fstat.type) 
+      assert files == path 
+    end
     assert DirWalker.next(walker) == nil
   end
   
@@ -101,6 +114,13 @@ defmodule DirWalkerTest do
     dirw = DirWalker.stream("test/dir")
     files = Enum.into(dirw,[])
     assert Enum.sort(files) == Enum.sort(test_files)
+  end 
+
+  test "stream method takes options" do 
+    paths = [ "test/dir/a.txt", "test/dir/c/d/f.txt", "test/dir/badlink" ]
+    dirw = DirWalker.stream("test/dir", matching: ~r(a|f))
+    files = Enum.into(dirw,[])
+    assert Enum.sort(files) == Enum.sort(paths)
   end 
 
 end

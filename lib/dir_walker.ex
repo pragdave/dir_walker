@@ -57,9 +57,9 @@ defmodule DirWalker do
 
   """
 
-  def stream(path_list) do
+  def stream(path_list, opts \\ %{}) do
     Stream.resource( fn -> 
-                      {:ok, dirw} = DirWalker.start_link(path_list) 
+                      {:ok, dirw} = DirWalker.start_link(path_list,opts) 
                       dirw
                     end ,
                     fn(dirw) -> 
@@ -186,7 +186,7 @@ defmodule DirWalker do
     {:ok , rstat } ->
         handle_existing_symlink(path,rstat,rest,n,mappers,result)
     {:error, :enoent } ->
-       Logger.info("Dangling symlink found: #{path} ")
+       Logger.info("Dangling symlink found: #{path}")
        handle_regular_file(path,rstat,rest,n,mappers,result)
     {:error, reason} ->
        Logger.info("Stat failed on #{path} with #{reason}")
@@ -213,11 +213,13 @@ defmodule DirWalker do
 
   # Extract this into function since we need it multiple places. 
   defp handle_regular_file(path,stat,rest,n,mappers,result) do
-     if mappers.matching.(path) do
-        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
-      else
-        first_n(rest, n, mappers, result)
-      end
+    Logger.debug("Handling #{path}")
+    if mappers.matching.(path) do
+      first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+    else
+      Logger.debug("Moving on to rest #{inspect(rest)}")
+      first_n(rest, n, mappers, result)
+    end
   end
 
   defp include_stat?(mappers) do 

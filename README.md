@@ -19,13 +19,18 @@ These methods have also been wrapped into a Stream resource.
 
     paths = DirWalker.stream(path [, options]) # or [path,path...]
 
+By default DirWalker will follow any symlinks found. With the `include_stat`
+option, it will instead simply return the `File.Stat` of the symlink
+and it is up to the calling code to handle symlinks. 
+
 `options` is a map containing zero or more of:
 
 * `include_stat: true`
 
   Return tuples containing both the file name and the `File.Stat`
   structure for each file. This does not incur a performance penalty
-  but obviously can use more memory.
+  but obviously can use more memory. When this option is specified,
+  DirWalker will not follow symlinks. 
 
 * `include_dir_names: true`
 

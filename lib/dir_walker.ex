@@ -82,7 +82,6 @@ defmodule DirWalker do
 
   def handle_call({:get_next, n}, _from, {path_list, mappers}) do
     {result, new_path_list} = first_n(path_list, n, mappers, _result=[])
-    Logger.debug("Replying with #{inspect(result)}  #{inspect(new_path_list)}")
     if( {result, new_path_list} == { [] , [] }) do
       result = nil
     end
@@ -217,11 +216,9 @@ defmodule DirWalker do
 
   # Extract this into function since we need it multiple places. 
   defp handle_regular_file(path,stat,rest,n,mappers,result) do
-    Logger.debug("Handling #{path}")
     if mappers.matching.(path) do
       first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
     else
-      Logger.debug("Moving on to rest #{inspect(rest)}")
       first_n(rest, n, mappers, result)
     end
   end

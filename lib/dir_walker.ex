@@ -7,7 +7,7 @@ defmodule DirWalker do
   use GenServer
 
   def start_link(path, opts \\ %{})
-                       
+ 
   def start_link(list_of_paths, opts) when is_list(list_of_paths) do
     mappers = setup_mappers(opts)
     GenServer.start_link(__MODULE__, {list_of_paths, mappers})
@@ -16,7 +16,6 @@ defmodule DirWalker do
   def start_link(path, opts) when is_binary(path) do
     start_link([path], opts)
   end
-
 
   @doc """
   Return the next _n_ files from the lists of files, recursing into
@@ -58,9 +57,9 @@ defmodule DirWalker do
 
   """
 
-  def stream(path_list) do
+  def stream(path_list, opts \\ %{}) do
     Stream.resource( fn -> 
-                      {:ok, dirw} = DirWalker.start_link(path_list) 
+                      {:ok, dirw} = DirWalker.start_link(path_list,opts) 
                       dirw
                     end ,
                     fn(dirw) -> 
@@ -83,6 +82,10 @@ defmodule DirWalker do
 
   def handle_call({:get_next, n}, _from, {path_list, mappers}) do
     {result, new_path_list} = first_n(path_list, n, mappers, _result=[])
+    Logger.debug("Replying with #{inspect(result)}  #{inspect(new_path_list)}")
+    if( {result, new_path_list} == { [] , [] }) do
+      result = nil
+    end
     { :reply, result, {new_path_list, mappers} }
   end
 
@@ -112,7 +115,7 @@ defmodule DirWalker do
 
   defp first_n(path_list, 0, _mappers, result), do: {result, path_list}
   defp first_n([], _n, _mappers, result),       do: {result, []}
-
+  
   defp first_n([ path | rest ], n, mappers, result) do
     # Should figure out a way to pass this in. 
     time_opts = [time: :posix]
@@ -133,16 +136,17 @@ defmodule DirWalker do
               n, 
               mappers, 
               mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
+
     :regular ->
-      first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+      handle_regular_file(path,stat,rest,n,mappers,result)
     :symlink ->
       if(include_stat?(mappers)) do
-        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+        handle_regular_file(path,stat,rest,n,mappers,result)
       else 
-        handle_symlink(path,time_opts,rest, n, mappers, result)
+        handle_symlink(path,time_opts,rest,n,mappers,result)
       end 
     true ->
-      first_n(rest, n-1, mappers, [ result ])
+      first_n(rest, n, mappers, result)
     end
   end
 
@@ -186,8 +190,8 @@ defmodule DirWalker do
     {:ok , rstat } ->
         handle_existing_symlink(path,rstat,rest,n,mappers,result)
     {:error, :enoent } ->
-       Logger.info("Dangling symlink found: #{path} ")
-       first_n(rest, n-1, mappers, [ mappers.include_stat.(path, rstat) | result ])
+       Logger.info("Dangling symlink found: #{path}")
+       handle_regular_file(path,rstat,rest,n,mappers,result)
     {:error, reason} ->
        Logger.info("Stat failed on #{path} with #{reason}")
        { result, [] }
@@ -204,12 +208,23 @@ defmodule DirWalker do
               mappers, 
               mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
       :regular ->
-        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+        handle_regular_file(path,stat,rest,n,mappers,result)
       true -> 
         first_n(rest, n-1, mappers, [ result ])
     end 
 
   end 
+
+  # Extract this into function since we need it multiple places. 
+  defp handle_regular_file(path,stat,rest,n,mappers,result) do
+    Logger.debug("Handling #{path}")
+    if mappers.matching.(path) do
+      first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+    else
+      Logger.debug("Moving on to rest #{inspect(rest)}")
+      first_n(rest, n, mappers, result)
+    end
+  end
 
   defp include_stat?(mappers) do 
     mappers.include_stat.(:a, :b) == {:a, :b}
@@ -221,10 +236,15 @@ defmodule DirWalker do
         one_of(opts[:include_stat],
                fn (path, _stat) -> path end,    
                fn (path, stat)  -> {path, stat} end),
+
       include_dir_names:
         one_of(opts[:include_dir_names],
                fn (_path, result) -> result end,    
-               fn (path, result)  -> [ path | result ] end)
+               fn (path, result)  -> [ path | result ] end),
+      matching:
+        one_of(!!opts[:matching],
+             fn _path -> true end,
+             fn path  -> String.match?(path, opts[:matching]) end),
     }
   end
 

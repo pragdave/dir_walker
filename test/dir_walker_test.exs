@@ -42,8 +42,8 @@ defmodule DirWalkerTest do
   test "returns directory names if asked to" do
     {:ok, walker} = DirWalker.start_link("test/dir/c/d", include_dir_names: true)
     files = DirWalker.next(walker, 99)
-    assert length(files) == 3
-    assert  ["test/dir/c/d/e", "test/dir/c/d/f.txt", "test/dir/c/d"] = files
+    assert length(files) == 2
+    assert  ["test/dir/c/d/f.txt", "test/dir/c/d"] = files
   end
 
   test "returns directory names and stats if asked to" do
@@ -51,12 +51,10 @@ defmodule DirWalkerTest do
                                          include_stat:      true,
                                          include_dir_names: true)
     files = DirWalker.next(walker, 99)
-    assert length(files) == 3
-    assert  [{"test/dir/c/d/e",     s2 = %File.Stat{}},
-			       {"test/dir/c/d/f.txt", s1 = %File.Stat{}}, 
+    assert length(files) == 2
+    assert  [{"test/dir/c/d/f.txt", s1 = %File.Stat{}}, 
              {"test/dir/c/d",       s3 = %File.Stat{}}] = files
     assert s1.type == :regular
-    assert s2.type == :directory
     assert s3.type == :directory
   end
 

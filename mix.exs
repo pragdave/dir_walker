@@ -25,7 +25,7 @@ defmodule DirWalker.Mixfile do
   def project do
     [
       app:         :dir_walker,
-      version:     "0.0.5",
+      version:     "0.0.6",
       elixir:      ">= 1.0.0",
       deps:        [],
       description: @moduledoc,

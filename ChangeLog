@@ -1,3 +1,8 @@
+2014-03-30 Dave Thomas <dave@pragprog.org>
+
+	* Fix issue with missing directory in tests. Based on a PR
+	  from Low Kian Seong (lowks)
+
 2014-10-18  Dave Thomas  <dave@FasterAir.local>
 
 	* Add `matching:` option to filter names of returned files.

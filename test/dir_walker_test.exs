@@ -5,13 +5,14 @@ defmodule DirWalkerTest do
     {:ok, walker} = DirWalker.start_link("test/dir")
     files = DirWalker.next(walker, 99)
     assert length(files) == 3
-    assert files == [ "test/dir/c/d/f.txt", "test/dir/b.txt", "test/dir/a.txt" ]
+		assert files == ["test/dir/a.txt", "test/dir/c/d/f.txt", "test/dir/b.txt"]
   end                 
 
 
   test "traversal in chunks works" do
     {:ok, walker} = DirWalker.start_link("test/dir")
-    for path <- [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ] do
+		expected = []
+    for path <- ["test/dir/b.txt", "test/dir/c/d/f.txt", "test/dir/a.txt" ] do
       files = DirWalker.next(walker)
       assert length(files) == 1
       assert files == [ path ]
@@ -22,10 +23,10 @@ defmodule DirWalkerTest do
 
   test "returns only matching names if requested" do
     {:ok, walker} = DirWalker.start_link("test/dir", matching: ~r(a|f))
-    for path <- [ "test/dir/a.txt", "test/dir/c/d/f.txt" ] do
+    for path <- ["test/dir/c/d/f.txt", "test/dir/a.txt"] do
       files = DirWalker.next(walker)
       assert length(files) == 1
-      assert files == [ path ]
+      assert files == [path]
     end
 
     assert DirWalker.next(walker) == nil
@@ -42,7 +43,7 @@ defmodule DirWalkerTest do
     {:ok, walker} = DirWalker.start_link("test/dir/c/d", include_dir_names: true)
     files = DirWalker.next(walker, 99)
     assert length(files) == 3
-    assert  ["test/dir/c/d/f.txt", "test/dir/c/d/e", "test/dir/c/d"] = files
+    assert  ["test/dir/c/d/e", "test/dir/c/d/f.txt", "test/dir/c/d"] = files
   end
 
   test "returns directory names and stats if asked to" do
@@ -51,8 +52,8 @@ defmodule DirWalkerTest do
                                          include_dir_names: true)
     files = DirWalker.next(walker, 99)
     assert length(files) == 3
-    assert  [{"test/dir/c/d/f.txt", s1 = %File.Stat{}}, 
-             {"test/dir/c/d/e",     s2 = %File.Stat{}},
+    assert  [{"test/dir/c/d/e",     s2 = %File.Stat{}},
+			       {"test/dir/c/d/f.txt", s1 = %File.Stat{}}, 
              {"test/dir/c/d",       s3 = %File.Stat{}}] = files
     assert s1.type == :regular
     assert s2.type == :directory
@@ -69,11 +70,11 @@ defmodule DirWalkerTest do
       dirw = DirWalker.stream("test/dir") 
       file =  Enum.take(dirw,1)
       assert length(file) == 1
-      assert file == [ "test/dir/a.txt"] 
+      assert file == [ "test/dir/b.txt"] 
   end 
 
   test "stream method completes" do 
-     paths = [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ]
+     paths = [ "test/dir/b.txt", "test/dir/a.txt", "test/dir/c/d/f.txt" ]
      dirw = DirWalker.stream("test/dir")
      files = Enum.into(dirw,[])
      assert Enum.sort(files) == Enum.sort(paths)

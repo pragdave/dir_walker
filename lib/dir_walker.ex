@@ -6,8 +6,8 @@ defmodule DirWalker do
 
   use GenServer
 
-  def start_link(path, opts \\ %{})
- 
+  def start_link(paths, opts \\ [])
+
   def start_link(list_of_paths, opts) when is_list(list_of_paths) do
     mappers = setup_mappers(opts)
     GenServer.start_link(__MODULE__, {list_of_paths, mappers})
@@ -114,21 +114,12 @@ defmodule DirWalker do
 
   defp first_n([ path | rest ], n, mappers, result) do
     stat = File.stat!(path)
-    case stat.type do
-    :directory ->
-      first_n([files_in(path) | rest], 
-              n, 
-              mappers, 
-              mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
-
-    :regular ->
-        if mappers.matching.(path) do
-        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
-      else
-        first_n(rest, n, mappers, result)
-      end
-
-    true ->
+    if stat.type == :directory do
+      rest = [files_in(path) | rest]
+    end
+    if mappers.filter.(path, stat) do
+      first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+    else
       first_n(rest, n, mappers, result)
     end
   end
@@ -149,22 +140,33 @@ defmodule DirWalker do
 
 
   defp setup_mappers(opts) do
-    %{
+    _mappers = %{
+      filter: create_filter(opts[:include_dir_names], opts[:matching]),
+
       include_stat:
         one_of(opts[:include_stat],
                fn (path, _stat) -> path end,    
                fn (path, stat)  -> {path, stat} end),
-
-      include_dir_names:
-        one_of(opts[:include_dir_names],
-               fn (_path, result) -> result end,    
-               fn (path, result)  -> [ path | result ] end),
-      matching:
-        one_of(!!opts[:matching],
-             fn _path -> true end,
-             fn path  -> String.match?(path, opts[:matching]) end),
     }
   end
+
+
+  defp create_filter(nil, nil) do
+    fn _path, stat -> stat.type == :regular end
+  end
+
+  defp create_filter(true, nil) do
+    fn _path, _stat -> true end
+  end
+
+  defp create_filter(nil, regex = %Regex{}) do
+    fn path, stat -> stat.type == :regular && Regex.match?(regex, path) end
+  end
+
+  defp create_filter(true, regex = %Regex{}) do
+    fn path, _stat -> Regex.match?(regex, path) end
+  end
+
 
   defp one_of(bool, _if_false, if_true) when bool, do: if_true
   defp one_of(_bool, if_false, _if_true),          do: if_false

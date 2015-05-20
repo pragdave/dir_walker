@@ -56,6 +56,13 @@ defmodule DirWalkerTest do
     assert  ["test/dir/c/d/f.txt", "test/dir/c/d"] = files
   end
 
+  test "directory names can be pulled one at a time" do
+    {:ok, walker} = DirWalker.start_link("test/dir/c/d", include_dir_names: true)
+    files = DirWalker.next(walker, 1)
+    assert length(files) == 1
+    assert  ["test/dir/c/d"] = files
+  end
+
   test "returns directory names and stats if asked to" do
     {:ok, walker} = DirWalker.start_link("test/dir/c/d", 
                                          include_stat:      true,

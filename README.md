@@ -1,7 +1,7 @@
 DirWalker
 =========
 
-DirWalker lazily traverses one or more directory trees, depth first, 
+DirWalker lazily traverses one or more directory trees, depth first,
 returning successive file names.
 
 Initialize the walker using
@@ -13,9 +13,9 @@ Then return the next `n` path names using
     paths = DirWalker.next(walker [, n \\ 1])
 
 Successive calls to `next` will return successive file names, until
-all file names have been returned. 
+all file names have been returned.
 
-These methods have also been wrapped into a Stream resource. 
+These methods have also been wrapped into a Stream resource.
 
     paths = DirWalker.stream(path [, options]) # or [path,path...]
 
@@ -33,7 +33,7 @@ These methods have also been wrapped into a Stream resource.
   of regular files are returned). Note that the order is such that directory names
   will typically be returned after the names of files in those directories.
 
-* `matches: ` _regex_
+* `matching: ` _regex_
 
   Only file names matching the regex will be returned. Does not affect
   directory traversals.

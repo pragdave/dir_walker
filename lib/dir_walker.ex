@@ -77,17 +77,17 @@ defmodule DirWalker do
   ##################
 
   def handle_call({:get_next, _n}, _from, state = {[], _}) do
-    { :reply, nil, state}
+    { :reply, nil, state }
   end
 
   def handle_call({:get_next, n}, _from, {path_list, mappers}) do
-    {result, new_path_list} = first_n(path_list, n, mappers, _result=[])
+    { result, new_path_list } = first_n(path_list, n, mappers, _result=[])
     { :reply, result, {new_path_list, mappers} }
   end
 
   def handle_call(:stop, from, state) do
-      GenServer.reply(from, :ok )
-      {:stop, :normal, state}
+    GenServer.reply(from, :ok )
+    { :stop, :normal, state }
   end
 
 
@@ -95,41 +95,39 @@ defmodule DirWalker do
   # nested directory listing. We keep it as a list rather
   # than flatten it in order to keep performance up.
 
-  defp first_n([ [] | rest ], n, mappers, result)  do
+  defp first_n([ [] | rest ], n, mappers, result), do:
     first_n(rest, n, mappers, result)
-  end
 
-  defp first_n([ [first] | rest ], n, mappers, result)  do
+  defp first_n([ [first] | rest ], n, mappers, result), do:
     first_n([ first | rest ], n, mappers, result)
-  end
 
-  defp first_n([ [first | nested] | rest ], n, mappers, result)  do
+  defp first_n([ [first | nested] | rest ], n, mappers, result), do:
     first_n([ first | [ nested | rest ] ], n, mappers, result)
-  end
 
   # Otherwise just a path as the first entry
 
   defp first_n(path_list, 0, _mappers, result), do: {result, path_list}
-  defp first_n([], _n, _mappers, result),       do: {result, []}
+  defp first_n([], _n, _mappers, []), do: {nil, []}
+  defp first_n([], _n, _mappers, result), do: {result, []}
 
   defp first_n([ path | rest ], n, mappers, result) do
     stat = File.stat!(path)
     case stat.type do
-    :directory ->
-      first_n([files_in(path) | rest],
-              n,
-              mappers,
-              mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
+      :directory ->
+        first_n([files_in(path) | rest],
+                n,
+                mappers,
+                mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
 
-    :regular ->
-        if mappers.matching.(Path.basename(path)) do
-        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
-      else
+      :regular ->
+        if mappers.matching.(path) do
+          first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+        else
+          first_n(rest, n, mappers, result)
+        end
+
+      true ->
         first_n(rest, n, mappers, result)
-      end
-
-    true ->
-      first_n(rest, n, mappers, result)
     end
   end
 
@@ -147,7 +145,6 @@ defmodule DirWalker do
 
   def ignore_error({:ok, list}, _path), do: list
 
-
   defp setup_mappers(opts) do
     %{
       include_stat:
@@ -162,10 +159,10 @@ defmodule DirWalker do
       matching:
         one_of(!!opts[:matching],
              fn _path -> true end,
-             fn path  -> String.match?(path, opts[:matching]) end),
+             fn path  -> Path.basename(path) |> String.match?(opts[:matching]) end),
     }
   end
 
   defp one_of(bool, _if_false, if_true) when bool, do: if_true
-  defp one_of(_bool, if_false, _if_true),          do: if_false
+  defp one_of(_bool, if_false, _if_true), do: if_false
 end

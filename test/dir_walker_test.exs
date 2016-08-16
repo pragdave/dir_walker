@@ -31,6 +31,19 @@ defmodule DirWalkerTest do
     assert DirWalker.next(walker) == nil
   end
 
+  test "returns nil after consuming one only file with matching name out of many" do
+    {:ok, walker} = DirWalker.start_link("test/dir", matching: ~r(^a\.txt$))
+    [ "test/dir/a.txt"] = DirWalker.next(walker)
+    assert DirWalker.next(walker) == nil
+  end
+
+  test "returns nil after consuming one only file with matching name out of one" do
+    {:ok, walker} = DirWalker.start_link("test/dir/c/d", matching: ~r(^f\.txt$))
+    [ "test/dir/c/d/f.txt"] = DirWalker.next(walker)
+    assert DirWalker.next(walker) == nil
+  end
+
+
   test "returns stat if asked to" do
     {:ok, walker} = DirWalker.start_link("test/dir/c", include_stat: true)
     files = DirWalker.next(walker, 99)

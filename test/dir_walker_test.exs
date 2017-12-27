@@ -1,22 +1,24 @@
 defmodule DirWalkerTest do
   use ExUnit.Case
-
+  import DirWalker.TestHelper
+  
   test "basic traversal works" do
     {:ok, walker} = DirWalker.start_link("test/dir")
     files = DirWalker.next(walker, 99)
-    assert length(files) == 3
-    assert files == [ "test/dir/c/d/f.txt", "test/dir/b.txt", "test/dir/a.txt" ]
+    assert_list_equal(files, [ "test/dir/c/d/f.txt", "test/dir/b.txt", "test/dir/a.txt" ])
   end                 
 
 
   test "traversal in chunks works" do
     {:ok, walker} = DirWalker.start_link("test/dir")
-    for path <- [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ] do
-      files = DirWalker.next(walker)
-      assert length(files) == 1
-      assert files == [ path ]
-    end
+    contents = [ "test/dir/a.txt", "test/dir/b.txt", "test/dir/c/d/f.txt" ]
+    
+    files =
+      DirWalker.next(walker) ++
+      DirWalker.next(walker) ++
+      DirWalker.next(walker) 
 
+    assert_list_equal(files, contents)
     assert DirWalker.next(walker) == nil
   end     
 
@@ -24,8 +26,7 @@ defmodule DirWalkerTest do
     {:ok, walker} = DirWalker.start_link("test/dir", matching: ~r(a|f))
     for path <- [ "test/dir/a.txt", "test/dir/c/d/f.txt" ] do
       files = DirWalker.next(walker)
-      assert length(files) == 1
-      assert files == [ path ]
+      assert_list_equal(files, [ path ])
     end
 
     assert DirWalker.next(walker) == nil
@@ -65,9 +66,9 @@ defmodule DirWalkerTest do
 
   test "stream method works" do
       dirw = DirWalker.stream("test/dir") 
-      file =  Enum.take(dirw,1)
+      file =  Enum.take(dirw, 1)
       assert length(file) == 1
-      assert file == [ "test/dir/a.txt"] 
+      assert hd(file) in [ "test/dir/a.txt", "test/dir/b.txt"] 
   end 
 
   test "stream method completes" do 

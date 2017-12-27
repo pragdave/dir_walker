@@ -76,6 +76,10 @@ defmodule DirWalker do
   # Implementation #
   ##################
 
+  def init(path_list) do
+    { :ok, path_list }
+  end
+  
   def handle_call({:get_next, _n}, _from, state = {[], _}) do
     { :reply, nil, state}
   end

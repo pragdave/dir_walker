@@ -7,11 +7,11 @@ defmodule DirWalker.Mixfile do
 
   Initialize the walker using
 
-      {:ok, walker} = DirWalker.start_link(path) # or [path, path...]
+        {:ok, walker} = DirWalker.start_link(path) # or [path, path...]
 
   Then return the next `n` path names using
 
-      paths = DirWalker.next(walker <, n \\ 1>)
+        paths = DirWalker.next(walker «, n \\ 1»)
 
   Successive calls to `next` will return successive file names, until
   all file names have been returned. 
@@ -25,11 +25,11 @@ defmodule DirWalker.Mixfile do
   def project do
     [
       app:         :dir_walker,
-      version:     "0.0.6",
-      elixir:      ">= 1.0.0",
+      version:     "0.0.7",
+      elixir:      ">= 1.5.0",
       deps:        [],
       description: @moduledoc,
-      package:     package
+      package:     package()
     ]
   end
 

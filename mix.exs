@@ -15,7 +15,7 @@ defmodule DirWalker.Mixfile do
       app:         :dir_walker,
       version:     "0.0.7",
       elixir:      ">= 1.5.0",
-      deps:        [],
+      deps:        [{:ex_doc, ">= 0.0.0", only: :dev}],
       description: @moduledoc,
       package:     package()
     ]
@@ -27,9 +27,10 @@ defmodule DirWalker.Mixfile do
 
   defp package do
     [
-      files:        [ "lib", "priv", "mix.exs", "README.md" ],
-      contributors: [ "Dave Thomas <dave@pragprog.org>"],
+      files:        [ "lib", "mix.exs", "README.md" ],
+      maintainers:  [ "Dave Thomas <dave@pragprog.org>"],
       licenses:     [ "Same as Elixir" ],
+      
       links:        %{
                        "GitHub" => "https://github.com/pragdave/dir_walker",
                     }

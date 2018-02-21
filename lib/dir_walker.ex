@@ -113,27 +113,27 @@ defmodule DirWalker do
 
   # Otherwise just a path as the first entry
 
-  defp first_n(path_list, 0, _mappers, result), do: {result, path_list}
-  defp first_n([], _n, _mappers, result),       do: {result, []}
+  defp first_n([], _n, _mappers, [_|_] = result), do: {result, []}
+  defp first_n([], _n, _mappers, []),             do: {nil, []}
+  defp first_n(path_list, 0, _mappers, result),   do: {result, path_list}
 
   defp first_n([ path | rest ], n, mappers, result) do
-    stat = File.stat!(path)
-    case stat.type do
-    :directory ->
-      first_n([files_in(path) | rest], 
-              n, 
-              mappers, 
-              mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
+    case File.stat(path) do
+      {:ok, %{type: :directory} = stat} ->
+        first_n([files_in(path) | rest],
+                          n,
+                          mappers,
+                          mappers.include_dir_names.(mappers.include_stat.(path, stat), result))
 
-    :regular ->
+      {:ok, %{type: :regular} = stat} ->
         if mappers.matching.(path) do
-        first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
-      else
-        first_n(rest, n, mappers, result)
-      end
+          first_n(rest, n-1, mappers, [ mappers.include_stat.(path, stat) | result ])
+        else
+          first_n(rest, n, mappers, result)
+        end
 
-    true ->
-      first_n(rest, n, mappers, result)
+      _ ->
+        first_n(rest, n, mappers, result)
     end
   end
 

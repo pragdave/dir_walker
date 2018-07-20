@@ -117,8 +117,8 @@ defmodule DirWalker do
   defp first_n([], _n, _mappers, result),       do: {result, []}
 
   defp first_n([ path | rest ], n, mappers, result) do
-    stat = File.stat!(path)
-    case stat.type do
+    stat = if File.exists?(path), do: File.stat!(path).type, else: :nonexistant
+    case stat do
     :directory ->
       first_n([files_in(path) | rest], 
               n, 
@@ -132,7 +132,7 @@ defmodule DirWalker do
         first_n(rest, n, mappers, result)
       end
 
-    true ->
+    _ ->
       first_n(rest, n, mappers, result)
     end
   end

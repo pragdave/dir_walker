@@ -7,6 +7,16 @@
 
 	* Add `matching:` option to filter names of returned files.
 
+2014-10-14 Booker Bense <bbense@gmail.com>
+	* :include_stats option turns off following
+	  symlinks
+
+2014-10-12 Booker Bense <bbense@gmail.com>
+    * Added support for detecting symlinks
+    * Tweaks to tests to work around git not storing
+      empty directories.
+
+
 2014-10-04  Dave Thomas  <dave@FasterAir.local>
 
 	* Add options to

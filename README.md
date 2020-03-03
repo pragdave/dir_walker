@@ -6,18 +6,24 @@ returning successive file names.
 
 Initialize the walker using
 
-    {:ok, walker} = DirWalker.start_link(path, [, options ]) # or [path, path...]
+```elixir
+{:ok, walker} = DirWalker.start_link(path, [, options ]) # or [path, path...]
+```
 
 Then return the next `n` path names using
 
-    paths = DirWalker.next(walker [, n \\ 1])
+```elixir
+paths = DirWalker.next(walker [, n \\ 1])
+```
 
 Successive calls to `next` will return successive file names, until
 all file names have been returned.
 
 These methods have also been wrapped into a Stream resource.
 
-    paths = DirWalker.stream(path [, options]) # or [path,path...]
+```elixir
+paths = DirWalker.stream(path [, options]) # or [path,path...]
+```
 
 By default DirWalker will follow any symlinks found. With the `include_stat`
 option, it will instead simply return the `File.Stat` of the symlink

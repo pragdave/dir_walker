@@ -79,7 +79,7 @@ defmodule DirWalker do
   def init(path_list) do
     { :ok, path_list }
   end
-  
+
   def handle_call({:get_next, _n}, _from, state = {[], _}) do
     { :reply, nil, state}
   end
@@ -150,7 +150,7 @@ defmodule DirWalker do
       else
         handle_symlink(path,time_opts,rest,n,mappers,result)
       end
-    true ->
+    _ ->
       first_n(rest, n, mappers, result)
     end
   end
